@@ -14,7 +14,7 @@
 
 $GLOBALS['BE_MOD']['accounts']['member']['frontenduserimport'] = array('FrontendUserImport', 'importUser');
 
-if (TL_MODE == 'BE' && strlen($GLOBALS['BE_MOD']['accounts']['member']))
+if (TL_MODE == 'BE' && is_array($GLOBALS['BE_MOD']['accounts']['member']))
 {
 	$GLOBALS['TL_CSS'][] = 'system/modules/frontenduserimport/html/styles.css';
 }
