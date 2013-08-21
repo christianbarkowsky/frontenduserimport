@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -10,9 +10,15 @@
  * @link    http://www.christianbarkowsky.de
  * @license LGPL
  */
+ 
+ 
+/**
+ * Run in a custom namespace, so the class can be replaced
+ */
+namespace CBW;
 
 
-class FrontendUserImport extends Backend
+class FrontendUserImport extends \Backend
 {
 	/**
 	 * Import
@@ -325,7 +331,7 @@ class FrontendUserImport extends Backend
 		}
 		catch (Exception $ex)
 		{
-			print $email."<br>";
+			print $email . '<br>';
 		}
 	}
 
@@ -410,6 +416,7 @@ class FrontendUserImport extends Backend
 		$exts = split("[/\\.]", $filename);
 		$n = count($exts)-1;
 		$exts = $exts[$n];
+		
 		return $exts;
 	}
 
@@ -422,5 +429,3 @@ class FrontendUserImport extends Backend
 		return substr($filename, strrpos($filename, '.'));
 	}
 }
-
-?>
