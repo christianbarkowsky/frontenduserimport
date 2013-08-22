@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -11,14 +11,12 @@
  * @license LGPL
  */
 
-
 $GLOBALS['BE_MOD']['accounts']['member']['frontenduserimport'] = array('FrontendUserImport', 'importUser');
 
-if (TL_MODE == 'BE' && is_array($GLOBALS['BE_MOD']['accounts']['member']))
+//if (TL_MODE == 'BE' && is_array($GLOBALS['BE_MOD']['accounts']['member']))
+if (TL_MODE == 'BE')
 {
-	$GLOBALS['TL_CSS'][] = 'system/modules/frontenduserimport/html/styles.css';
+	$GLOBALS['TL_CSS'][] = 'system/modules/frontenduserimport/assets/styles.css';
 }
 
 $GLOBALS['TL_HOOKS']['createNewUser'][] = array('FrontendUserImport', 'createNewUser');
-
-?>

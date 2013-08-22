@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -25,5 +25,3 @@ $GLOBALS['TL_DCA']['tl_member']['fields']['source'] = array (
 	'label'                   => &$GLOBALS['TL_LANG']['tl_member']['source'],
 	'eval'                    => array('fieldType'=>'checkbox', 'files'=>true)
 );
-
-?>
