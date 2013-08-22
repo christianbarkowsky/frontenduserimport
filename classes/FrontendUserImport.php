@@ -75,6 +75,11 @@ class FrontendUserImport extends \Backend
 			$this->reload();
 		}
 		
+		if(!$this->checkForMemberList())
+		{
+			\Message::addError('fgdfdgdg');
+		}
+		
 		$arrData = array();
 
 		//$objTree = new \FileTree($this->prepareForWidget(specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source']), 'source', null, 'source', 'tl_member'));
@@ -119,13 +124,7 @@ class FrontendUserImport extends \Backend
 		foreach ($arrFields as $arrField)
 		{
 			$strClass = $GLOBALS['TL_FFL'][$arrField['inputType']];
-			$strFile = sprintf('%s/system/modules/frontend/%s.php', TL_ROOT, $strClass);
-
-			if (!file_exists($strFile))
-			{
-				continue;
-			}
-
+			
 			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
 			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name']));
 
@@ -159,19 +158,21 @@ class FrontendUserImport extends \Backend
 
 			<h2 class="sub_headline">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['import'][1].'</h2>' . $this->getMessages() . '
 
-			<div class="tl_formbody_edit">
-				<div class="tl_tbox">
-				<h3>'.specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][0]).'</h3>
-				<p class="tl_help">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][1].'</p>
+			<div id="frontenduserimport">
+				<div class="frontenduserimport_box">
+				<h2>'.specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][0]).'</h2>
+				<p>'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][1].'</p>
 				</div>
+				
 				<form action="'.ampersand($this->Environment->request, ENCODE_AMPERSANDS).'" id="tl_member_frontenduserimport" class="tl_form" method="post">
 				<input type="hidden" name="FORM_SUBMIT" value="tl_member_frontenduserimport" />
 				<input type="hidden" name="REQUEST_TOKEN" value="' . REQUEST_TOKEN . '">
-				<div class="tl_tbox">
-				  <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0].'</label></h3>'.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1]) ? '
-				  <p class="tl_help">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1].'</p>' : '').'
+				<div class="frontenduserimport_box">
+				  <h2><label for="source">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0].'</label></h2>'.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1]) ? '
+				  <p>'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1].'</p>' : '').'
 				</div>
-				<div class="tl_tbox">
+				
+				<div class="frontenduserimport_box">
 					'.$checkbox_container_panel.'
 				</div>
 			</div>
