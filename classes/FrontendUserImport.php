@@ -11,10 +11,7 @@
  * @license LGPL
  */
  
- 
-/**
- * Run in a custom namespace, so the class can be replaced
- */
+
 namespace CBW;
 
 
@@ -25,21 +22,21 @@ class FrontendUserImport extends \Backend
 	 */
 	public function importUser()
 	{
-		if ($this->Input->get('key') != 'frontenduserimport')
+		if (\Input::get('key') != 'frontenduserimport')
 		{
 			return '';
 		}
 
 		// Import csv
-		if ($this->Input->post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
 		{
-			if (!$this->Input->post('source') || !is_array($this->Input->post('source')))
+			if (!\Input::post('source') || !is_array(\Input::post('source')))
 			{
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['all_fields'];
 				$this->reload();
 			}
 
-			foreach ($this->Input->post('source') as $strCsvFile)
+			foreach (\Input::post('source') as $strCsvFile)
 			{
 				$_SESSION['TL_USERIMPORT'] = null;
 
@@ -57,7 +54,7 @@ class FrontendUserImport extends \Backend
 				foreach ($csvFileStream as $line)
 				{
 					$data = explode(";", $line);
-					$this->ImportProcess($data, $this->Input->post('newsletter'), $this->Input->post('usergroup'), $this->Input->post('publicFields'));
+					$this->ImportProcess($data, \Input::post('newsletter'), \Input::post('usergroup'), \Input::post('publicFields'));
 				}
 
 				if($_SESSION['TL_USERIMPORT'] > 0 && $_SESSION['TL_USERIMPORT'] != null)
@@ -125,7 +122,7 @@ class FrontendUserImport extends \Backend
 			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
 			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name']));
 
-			if ($this->Input->post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+			if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
 			{
 				$objWidget->validate();
 
