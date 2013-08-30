@@ -36,12 +36,13 @@ class FrontendUserImport extends \Backend
 				$this->reload();
 			}
 
-			/*
-
 			foreach (\Input::post('source') as $strCsvFile)
 			{
 				$_SESSION['TL_USERIMPORT'] = null;
+				
+				print 'feuer frei';
 
+				/*
 				$strFile = array();
 
 				$csvFileStream = array_map('rtrim', file(TL_ROOT . '/' . $strCsvFile));
@@ -67,9 +68,8 @@ class FrontendUserImport extends \Backend
 				{
 					$_SESSION['TL_INFO'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'], $_SESSION['TL_USERIMPORT']);
 				}
+				*/
 			}
-			
-			*/
 
 			setcookie('BE_PAGE_OFFSET', 0, 0, '/');
 			$this->reload();
@@ -77,14 +77,19 @@ class FrontendUserImport extends \Backend
 		
 		if(!$this->checkForMemberList())
 		{
-			\Message::addError('fgdfdgdg');
+			\Message::addError('Bitte MemberList installieren.');
 		}
 		
 		$arrData = array();
+		
+		// $arrData, $strName, $varValue=null, $strField='', $strTable=''
 
 		//$objTree = new \FileTree($this->prepareForWidget(specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source']), 'source', null, 'source', 'tl_member'));
-		$objTree = new \FileTree($this->prepareForWidget($arrData, 'source', null, 'source', 'tl_member'));
-
+		//$objTree = new \FileTree($this->prepareForWidget($arrFieldX, 'source', null, 'source', 'tl_member'));
+		//$objTree = new \FileTree($this->prepareForWidget($arrData, 'source', null, 'source', 'tl_member'));
+		
+		$objTree = $this->getFileTreeWidget();
+		
 		$arrFields['newsletter_field'] = array
 		(
 			'name'				=> 'newsletter',
@@ -123,7 +128,12 @@ class FrontendUserImport extends \Backend
 
 		foreach ($arrFields as $arrField)
 		{
-			$strClass = $GLOBALS['TL_FFL'][$arrField['inputType']];
+			$strClass = $GLOBALS['BE_FFL'][$arrField['inputType']];
+
+			if (!class_exists($strClass))
+			{
+				continue;
+			}			
 			
 			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
 			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name']));
@@ -150,14 +160,19 @@ class FrontendUserImport extends \Backend
 			$checkbox_container_panel .= $objWidget->generateWithError();
 			$checkbox_container_panel .= '</div><br/>';
 		}
+		
 
-		return '
+		$return = '
 			<div id="tl_buttons">
 			<a href="'.$this->getReferer(ENCODE_AMPERSANDS).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
 			</div>
-
+			
 			<h2 class="sub_headline">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['import'][1].'</h2>' . $this->getMessages() . '
-
+			';
+			
+		if($this->checkForMemberList())
+		{
+			$return .= '
 			<div id="frontenduserimport">
 				<div class="frontenduserimport_box">
 				<h2>'.specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][0]).'</h2>
@@ -168,7 +183,7 @@ class FrontendUserImport extends \Backend
 				<input type="hidden" name="FORM_SUBMIT" value="tl_member_frontenduserimport" />
 				<input type="hidden" name="REQUEST_TOKEN" value="' . REQUEST_TOKEN . '">
 				<div class="frontenduserimport_box">
-				  <h2><label for="source">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0].'</label></h2>'.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1]) ? '
+				  <h2><label for="source">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0].'</label></h2>' . $objTree->generate() . (strlen($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1]) ? '
 				  <p>'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1].'</p>' : '').'
 				</div>
 				
@@ -183,6 +198,9 @@ class FrontendUserImport extends \Backend
 				</div>
 			</div>
 			</form>';
+		}
+		
+		return $return;
 	}
 
 
@@ -430,5 +448,48 @@ class FrontendUserImport extends \Backend
 	private function getFileExtension($filename)
 	{
 		return substr($filename, strrpos($filename, '.'));
+	}
+	
+	
+	/**
+	 * Return the file tree widget as object
+	 * @param mixed
+	 * @return object
+	 */
+	protected function getFileTreeWidget($value=null)
+	{
+		$widget = new \FileTree();
+
+		$widget->id = 'source';
+		$widget->name = 'source';
+		$widget->mandatory = true;
+		$GLOBALS['TL_DCA']['tl_member']['fields']['outlooksource']['eval']['fieldType'] = 'radio';
+		$GLOBALS['TL_DCA']['tl_member']['fields']['outlooksource']['eval']['files'] = true;
+		$GLOBALS['TL_DCA']['tl_member']['fields']['outlooksource']['eval']['filesOnly'] = true;
+		$GLOBALS['TL_DCA']['tl_member']['fields']['outlooksource']['eval']['extensions'] = 'csv';
+		$widget->strTable = 'tl_member';
+		$widget->strField = 'source';
+		$widget->value = $value;
+
+		$widget->label = $GLOBALS['TL_LANG']['tl_member']['source'][0];
+
+		if ($GLOBALS['TL_CONFIG']['showHelp'] && strlen($GLOBALS['TL_LANG']['tl_member']['source'][1]))
+		{
+			$widget->help = $GLOBALS['TL_LANG']['tl_member']['source'][1];
+		}
+
+		/*
+		// Valiate input
+		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+		{
+			$widget->validate();
+			if ($widget->hasErrors())
+			{
+				$this->blnSave = false;
+			}
+		}
+		*/
+
+		return $widget;
 	}
 }
