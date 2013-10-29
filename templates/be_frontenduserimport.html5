@@ -25,6 +25,7 @@
 		</div>
 		
 		<div class="frontenduserimport_box">
+			<h2><?php echo $this->options_headline; ?></h2>
 			<?php echo $this->checkbox_container; ?>
 		</div>
 		

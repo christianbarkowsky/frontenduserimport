@@ -18,3 +18,4 @@ $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'] = '%s Mitglieder 
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'] = 'Mitglieder importieren';
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['importerror'] = array('Es könnten nicht alle Mitglieder importiert werden. Fehler: E-Mail und Nachname dürfen nicht leer sein.', '');
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = 'Es wurde kein Mitglied hinzugefügt.';
+$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['options_headline'] = 'Optionen';

@@ -45,63 +45,42 @@ class FrontendUserImport extends \Backend
 		$this->Template->csvSource_headline = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0];
 		$this->Template->csvSource_help = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1];
 		$this->Template->isMemberlistInstalled = $this->checkForMemberList();
+		$this->Template->options_headline = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['options_headline'];
+		
+		$_SESSION['TL_MEMBERIMPORT'] = '';
 	
-		// Import csv
 		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport' && $this->blnSave)
 		{
-		
-		
-			$file = \FilesModel::findOneById($this->Template->csvSource->value);
-		
-			print 'abgesendet';
+			$csvFile = \FilesModel::findOneById($this->Template->csvSource->value);
 			
-			/*
-			if (!\Input::post('source') || !is_array(\Input::post('source')))
+			if ($csvFile)
+			{				
+				$objFile = new \File($csvFile->path, true);
+				$arrFileContent = $objFile->getContentAsArray();
+				
+				foreach ($arrFileContent as $line)
+				{
+					$arrData = explode(";", $line);
+					$this->ImportProcess($arrData, \Input::post('newsletter'), \Input::post('usergroup'), \Input::post('publicFields'));
+				}
+
+				if($_SESSION['TL_MEMBERIMPORT'] > 0 && $_SESSION['TL_MEMBERIMPORT'] != null)
+				{
+					$_SESSION['TL_CONFIRM'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'], $_SESSION['TL_MEMBERIMPORT']);
+				}
+				else
+				{
+					$_SESSION['TL_INFO'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'], $_SESSION['TL_MEMBERIMPORT']);
+				}
+				
+				setcookie('BE_PAGE_OFFSET', 0, 0, '/');
+				$this->reload();			
+			}
+			else
 			{
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['all_fields'];
 				$this->reload();
 			}
-
-			foreach (\Input::post('source') as $strCsvFile)
-			{
-				$_SESSION['TL_USERIMPORT'] = null;
-				
-				print 'feuer frei';
-				*/
-
-				/*
-				$strFile = array();
-
-				$csvFileStream = array_map('rtrim', file(TL_ROOT . '/' . $strCsvFile));
-
-				if($this->getFileExtension($strCsvFile) != '.csv')
-				{
-					$_SESSION['TL_ERROR'][] = sprintf($GLOBALS['TL_LANG']['ERR']['filetype'], $objFile->extension);
-					continue;
-				}
-
-				$importCounter = 0;
-				foreach ($csvFileStream as $line)
-				{
-					$data = explode(";", $line);
-					$this->ImportProcess($data, \Input::post('newsletter'), \Input::post('usergroup'), \Input::post('publicFields'));
-				}
-
-				if($_SESSION['TL_USERIMPORT'] > 0 && $_SESSION['TL_USERIMPORT'] != null)
-				{
-					$_SESSION['TL_CONFIRM'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'], $_SESSION['TL_USERIMPORT']);
-				}
-				else
-				{
-					$_SESSION['TL_INFO'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'], $_SESSION['TL_USERIMPORT']);
-				}
-				*/
-			//}
-
-			/*
-			setcookie('BE_PAGE_OFFSET', 0, 0, '/');
-			$this->reload();
-			*/
 		}
 		
 		if(!$this->checkForMemberList())
@@ -109,14 +88,13 @@ class FrontendUserImport extends \Backend
 			\Message::addError('Please install the memberlist extension.');
 		}
 		
-		/*
-		$arrFields['newsletter_field'] = array
+		$arrFields['newsletter'] = array
 		(
 			'name'				=> 'newsletter',
 			'label'				=> &$GLOBALS['TL_LANG']['tl_member']['newsletter'],
 			'exclude'			=> true,
 			'inputType'			=> 'checkbox',
-			'options_callback'	=> array('FrontendUserImport', 'getNewsletters'),
+			'foreignKey'		=> 'tl_newsletter_channel.title',
 			'eval'				=> array('multiple'=>true, 'feEditable'=>true, 'feGroup'=>'newsletter')
 		);
 
@@ -149,28 +127,27 @@ class FrontendUserImport extends \Backend
 		foreach ($arrFields as $arrField)
 		{
 			$strClass = $GLOBALS['TL_FFL'][$arrField['inputType']];
-			$strFile = sprintf('%s/system/modules/frontend/%s.php', TL_ROOT, $strClass);
 
-			if (!file_exists($strFile))
+			if (!class_exists($strClass))
 			{
 				continue;
 			}
 
 			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
-			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name']));
+			$objWidget = new $strClass($strClass::getAttributesFromDca($arrField, $arrField['name'], $arrField['value']));
 
+			// Validate the widget
 			if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
 			{
 				$objWidget->validate();
 
 				if ($objWidget->hasErrors())
 				{
-					$this->Template->haserrors = true;
 					$doNotSubmit = true;
 				}
 			}
-
-			$arrWidgets[] = $objWidget;
+			
+			$arrWidgets[$arrField['name']] = $objWidget;
 		}
 
 		$checkbox_container_panel = '';
@@ -181,9 +158,6 @@ class FrontendUserImport extends \Backend
 			$checkbox_container_panel .= $objWidget->generateWithError();
 			$checkbox_container_panel .= '</div><br/>';
 		}
-		*/
-		
-		$checkbox_container_panel = '';
 		
 		$this->Template->checkbox_container = $checkbox_container_panel;
 		
@@ -192,33 +166,35 @@ class FrontendUserImport extends \Backend
 
 
 	/**
-	 * Suche E-Mails in tl_member
+	 * Search member by email
 	 */
-	private function SearchEmail($email)
+	private function searchEmail($strEmail)
 	{
-		$objUser = $this->Database->prepare("SELECT * FROM tl_member WHERE email=?")->limit(1)->execute($email);
-
-		if ($objUser->numRows < 1)
-			return false;
-
-		return true;
+		$objMember = \MemberModel::findByEmail($strEmail);
+		
+		if ($objMember !== null)
+		{
+			return true;
+		}
+		
+		return false;
 	}
 
 
 	/**
-	 * Importprozess
+	 * Import process
 	 */
 	private function ImportProcess($data, $newsletter, $group, $publicFields)
 	{
 		if($data[13] != null && $data[1] != '')
 		{
-			if($this->SearchEmail($data[13]) == false)
+			if($this->searchEmail($data[13]) == false)
 			{
-				$this->CreateNewUser($data, $publicFields);
+				$this->createNewUser($data, $publicFields);
 
-				$userImportSession = $_SESSION['TL_USERIMPORT'];
+				$userImportSession = $_SESSION['TL_MEMBERIMPORT'];
 				$userImportSession++;
-				$_SESSION['TL_USERIMPORT'] = $userImportSession;
+				$_SESSION['TL_MEMBERIMPORT'] = $userImportSession;
 			}
 
 			$this->SetNewsletter($data[13], $newsletter);
@@ -232,67 +208,76 @@ class FrontendUserImport extends \Backend
 
 
 	/**
-	 * tl_member wird angelegt
+	 * Create new member
 	 */
-	public function CreateNewUser($data, $publicFields)
+	public function createNewUser($data, $publicFields)
 	{
-		$this->import('FrontendUser', 'User');
-
-		$arrSet = array();
-
-		$arrSet['tstamp'] = time();
-		$arrSet['firstname'] = $data[0];
-		$arrSet['lastname'] = $data[1];
-		$arrSet['dateOfBirth'] = $data[2];
-		$arrSet['gender'] = $data[3];
-		$arrSet['company'] = $data[4];
-		$arrSet['street'] = $data[5];
-		$arrSet['postal'] = $data[6];
-		$arrSet['city'] = $data[7];
-		$arrSet['state'] = $data[8];
-		$arrSet['country'] = $data[9];
-		$arrSet['phone'] = $data[10];
-		$arrSet['mobile'] = $data[11];
-		$arrSet['fax'] = $data[12];
-		$arrSet['email'] = $data[13];
-		$arrSet['website'] = $data[14];
-		$arrSet['language'] = $data[15];
-		$arrSet['publicFields'] = serialize($publicFields);
-
+		$member = new \MemberModel();
+		$member->tstamp = time();
+		$member->createdOn = time();
+		$member->dateAdded = time();
+		$member->firstname = $data[0];
+		$member->lastname = $data[1];
+		$member->dateOfBirth = $data[2];
+		$member->gender = $data[3];
+		$member->company = $data[4];
+		$member->street = $data[5];
+		$member->postal = $data[6];
+		$member->city = $data[7];
+		$member->state = $data[8];
+		$member->country = $data[9];
+		$member->phone = $data[10];
+		$member->mobile = $data[11];
+		$member->fax = $data[12];
+		$member->email = $data[13];
+		$member->website = $data[14];
+		$member->language = $data[15];
+		$member->publicFields = serialize($publicFields);
+		
 		if($data[16] != '' && $data[17] != '')
 		{
-			$arrSet['username'] = $data[16];
-			$arrSet['password'] = $this->setPassword($data[17]);
-			$arrSet['login'] = 1;
+			$member->username = $data[16];
+			$member->password = $this->setPassword($data[17]);
+			$member->login = 1;
 		}
-
-		$insert = $this->Database->prepare("INSERT INTO tl_member %s")->set($arrSet)->execute();
+		
+		$member->save();
 	}
 
 
 	/**
 	 * Newsletter-Eintrag wird gesetzt
 	 */
-	private function SetNewsletter($email, $newsletter)
-	{
-		if (!is_array($newsletter))
-		{
+	private function SetNewsletter($strEmail, $arrNewsletter)
+	{	
+		if(empty($arrNewsletter))
 			return;
-		}
-
-		foreach ($newsletter as $intNewsletter)
+	
+		if (!is_array($arrNewsletter))
 		{
-			if ($intNewsletter < 1)
-			{
-				continue;
-			}
-
-			if($this->SearchEmailInNewsletter($email, intval($intNewsletter)) == false)
-			{
-				$this->Database->prepare("INSERT INTO tl_newsletter_recipients SET pid=?, tstamp=?, email=?, active=1")
-									->execute(intval($intNewsletter), time(), $email);
-			}
+			$this->setNewsletterRecipient($arrNewsletter, $strEmail);
 		}
+		else
+		{
+			foreach ($arrNewsletter as $intNewsletter)
+			{
+				if ($intNewsletter < 1)
+				{
+					continue;
+				}
+	
+				if($this->SearchEmailInNewsletter($strEmail, intval($intNewsletter)) == false)
+				{
+					$this->setNewsletterRecipient($intNewsletter, $strEmail);
+				}
+			}	
+		}
+	}
+	
+	
+	private function setNewsletterRecipient($intNewsletter, $strEmail)
+	{
+		$this->Database->prepare("INSERT INTO tl_newsletter_recipients SET pid=?, tstamp=?, email=?, active=1")->execute(intval($intNewsletter), time(), $strEmail);
 	}
 
 
@@ -337,66 +322,21 @@ class FrontendUserImport extends \Backend
 			print $email."<br>";
 		}
 	}
-
-
-	/**
-	 * Newsletter Channels werden zurückgegeben
-	 */
-	public function getNewsletters($dc)
-	{
-		$objNewsletter = $this->Database->execute("SELECT id, title FROM tl_newsletter_channel");
-
-		if ($objNewsletter->numRows < 1)
-		{
-			return array();
-		}
-
-		$arrNewsletters = array();
-
-		// Back end
-		if (TL_MODE == 'BE')
-		{
-			while ($objNewsletter->next())
-			{
-				$arrNewsletters[$objNewsletter->id] = $objNewsletter->title;
-			}
-
-			return $arrNewsletters;
-		}
-
-		// Front end
-		$newsletters = deserialize($dc->newsletters, true);
-
-		if (!is_array($newsletters) || count($newsletters) < 1)
-		{
-			return array();
-		}
-
-		while ($objNewsletter->next())
-		{
-			if (in_array($objNewsletter->id, $newsletters))
-			{
-				$arrNewsletters[$objNewsletter->id] = $objNewsletter->title;
-			}
-		}
-
-		return $arrNewsletters;
-	}
-
-
+	
+	
 	/**
 	 * Set password
 	 */
-	private function setPassword($password)
+	private function setPassword($strPassword)
 	{
 		$strSalt = substr(md5(uniqid('', true)), 0, 23);
 
-		return sha1($strSalt . $password) . ':' . $strSalt;
+		return sha1($strSalt . $strPassword) . ':' . $strSalt;
 	}
 	
 	
 	/**
-	 * Check for memberlist module
+	 * Check for memberlist extension
 	 */
 	private function checkForMemberList()
 	{
@@ -409,29 +349,7 @@ class FrontendUserImport extends \Backend
 		return false;
 	}
 
-
-	/**
-	 * findexts
-	 */
-	private function findexts ($filename)
-	{
-		$filename = strtolower($filename);
-		$exts = split("[/\\.]", $filename);
-		$n = count($exts)-1;
-		$exts = $exts[$n];
-		return $exts;
-	}
-
-
-	/**
-	 * Get File extension from file name
-	 */
-	private function getFileExtension($filename)
-	{
-		return substr($filename, strrpos($filename, '.'));
-	}
-	
-	
+		
 	/**
 	 * Return the file tree widget as object
 	 */
@@ -453,10 +371,8 @@ class FrontendUserImport extends \Backend
 			$widget->help = $GLOBALS['TL_LANG']['tl_member']['source'][1];
 		}
 
-		// Valiate input
 		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
 		{
-			print 'dfsdf';
 			$widget->validate();
 
 			if ($widget->hasErrors())
