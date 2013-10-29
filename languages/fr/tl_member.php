@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -6,8 +6,7 @@
  * Copyright (C) 2008-2013 Christian Barkowsky
  * 
  * @package FrontendUserImport
- * @author  Christian Barkowsky <http://www.christianbarkowsky.de>
- * @link    http://www.christianbarkowsky.de
+ * @author  Christian Barkowsky <http://christianbarkowsky.de>
  * @license LGPL
  */
 
@@ -22,5 +21,3 @@ $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'] = "%s membres ont
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'] = "Importer les membres";
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['importerror']['0'] = "Aucun membre n'a pu être importé. Erreur : l'e-mail et le nom ne doivent pas être vide.";
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = "Aucun membre importé.";
- 
-?>

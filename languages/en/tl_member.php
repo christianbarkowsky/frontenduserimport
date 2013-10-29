@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -6,8 +6,7 @@
  * Copyright (C) 2008-2013 Christian Barkowsky
  * 
  * @package FrontendUserImport
- * @author  Christian Barkowsky <http://www.christianbarkowsky.de>
- * @link    http://www.christianbarkowsky.de
+ * @author  Christian Barkowsky <http://christianbarkowsky.de>
  * @license LGPL
  */
 
@@ -18,6 +17,4 @@ $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'] =  array('I
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'] = '%s users are imported.';
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'] = 'Import user';
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['importerror'] = array('Not users could be imported. Error: e-mail and surname cannot be empty.', '');
-$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = 'No Users added.'
-
-?>
+$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = 'No Users added.';

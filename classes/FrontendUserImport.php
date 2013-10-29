@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -6,37 +6,70 @@
  * Copyright (C) 2008-2013 Christian Barkowsky
  * 
  * @package FrontendUserImport
- * @author  Christian Barkowsky <http://www.christianbarkowsky.de>
- * @link    http://www.christianbarkowsky.de
+ * @author  Christian Barkowsky <http://christianbarkowsky.de>
  * @license LGPL
  */
+ 
+
+/**
+ * Run in a custom namespace, so the class can be replaced
+ */
+namespace Contao;
 
 
-class FrontendUserImport extends Backend
+class FrontendUserImport extends \Backend
 {
+
+	protected $blnSave = true;
+	
+	
 	/**
 	 * Import
 	 */
-	public function importUser()
+	public function importMembers(DataContainer $dc)
 	{
-		if ($this->Input->get('key') != 'frontenduserimport')
+		if (\Input::get('key') != 'frontenduserimport')
 		{
 			return '';
 		}
-
+		
+		$this->Template = new BackendTemplate('be_frontenduserimport');
+		$this->Template->hrefBack = ampersand(str_replace('&key=frontenduserimport', '', \Environment::get('request')));
+		$this->Template->goBack = $GLOBALS['TL_LANG']['MSC']['goBack'];
+		$this->Template->headline = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'];
+		$this->Template->request = ampersand(\Environment::get('request'), ENCODE_AMPERSANDS);
+		$this->Template->submit = specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['import'][0]);
+		$this->Template->documentation_headline = specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][0]);
+		$this->Template->documentation = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][1];
+		$this->Template->csvSource = $this->getFileTreeWidget();
+		$this->Template->csvSource_headline = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0];
+		$this->Template->csvSource_help = $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1];
+		$this->Template->isMemberlistInstalled = $this->checkForMemberList();
+	
 		// Import csv
-		if ($this->Input->post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport' && $this->blnSave)
 		{
-			if (!$this->Input->post('source') || !is_array($this->Input->post('source')))
+		
+		
+			$file = \FilesModel::findOneById($this->Template->csvSource->value);
+		
+			print 'abgesendet';
+			
+			/*
+			if (!\Input::post('source') || !is_array(\Input::post('source')))
 			{
 				$_SESSION['TL_ERROR'][] = $GLOBALS['TL_LANG']['ERR']['all_fields'];
 				$this->reload();
 			}
 
-			foreach ($this->Input->post('source') as $strCsvFile)
+			foreach (\Input::post('source') as $strCsvFile)
 			{
 				$_SESSION['TL_USERIMPORT'] = null;
+				
+				print 'feuer frei';
+				*/
 
+				/*
 				$strFile = array();
 
 				$csvFileStream = array_map('rtrim', file(TL_ROOT . '/' . $strCsvFile));
@@ -51,7 +84,7 @@ class FrontendUserImport extends Backend
 				foreach ($csvFileStream as $line)
 				{
 					$data = explode(";", $line);
-					$this->ImportProcess($data, $this->Input->post('newsletter'), $this->Input->post('usergroup'), $this->Input->post('publicFields'));
+					$this->ImportProcess($data, \Input::post('newsletter'), \Input::post('usergroup'), \Input::post('publicFields'));
 				}
 
 				if($_SESSION['TL_USERIMPORT'] > 0 && $_SESSION['TL_USERIMPORT'] != null)
@@ -62,14 +95,21 @@ class FrontendUserImport extends Backend
 				{
 					$_SESSION['TL_INFO'][] = sprintf($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'], $_SESSION['TL_USERIMPORT']);
 				}
-			}
+				*/
+			//}
 
+			/*
 			setcookie('BE_PAGE_OFFSET', 0, 0, '/');
 			$this->reload();
+			*/
 		}
-
-		$objTree = new FileTree($this->prepareForWidget(specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source']), 'source', null, 'source', 'tl_member'));
-
+		
+		if(!$this->checkForMemberList())
+		{
+			\Message::addError('Please install the memberlist extension.');
+		}
+		
+		/*
 		$arrFields['newsletter_field'] = array
 		(
 			'name'				=> 'newsletter',
@@ -119,7 +159,7 @@ class FrontendUserImport extends Backend
 			$arrField['eval']['required'] = $arrField['eval']['mandatory'];
 			$objWidget = new $strClass($this->prepareForWidget($arrField, $arrField['name']));
 
-			if ($this->Input->post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+			if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
 			{
 				$objWidget->validate();
 
@@ -141,38 +181,13 @@ class FrontendUserImport extends Backend
 			$checkbox_container_panel .= $objWidget->generateWithError();
 			$checkbox_container_panel .= '</div><br/>';
 		}
-
-		// Return form
-		return '
-			<div id="tl_buttons">
-			<a href="'.$this->getReferer(ENCODE_AMPERSANDS).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
-			</div>
-
-			<h2 class="sub_headline">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['import'][1].'</h2>' . $this->getMessages() . '
-
-			<div class="tl_formbody_edit">
-				<div class="tl_tbox">
-				<h3>'.specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][0]).'</h3>
-				<p class="tl_help">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'][1].'</p>
-				</div>
-				<form action="'.ampersand($this->Environment->request, ENCODE_AMPERSANDS).'" id="tl_member_frontenduserimport" class="tl_form" method="post">
-				<input type="hidden" name="FORM_SUBMIT" value="tl_member_frontenduserimport" />
-				<input type="hidden" name="REQUEST_TOKEN" value="' . REQUEST_TOKEN . '">
-				<div class="tl_tbox">
-				  <h3><label for="source">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][0].'</label></h3>'.$objTree->generate().(strlen($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1]) ? '
-				  <p class="tl_help">'.$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['source'][1].'</p>' : '').'
-				</div>
-				<div class="tl_tbox">
-					'.$checkbox_container_panel.'
-				</div>
-			</div>
-
-			<div class="tl_formbody_submit">
-				<div class="tl_submit_container">
-					<input type="submit" name="save" id="save" class="tl_submit" alt="import style sheet" accesskey="s" value="'.specialchars($GLOBALS['TL_LANG']['tl_member_frontenduserimport']['import'][0]).'" />
-				</div>
-			</div>
-			</form>';
+		*/
+		
+		$checkbox_container_panel = '';
+		
+		$this->Template->checkbox_container = $checkbox_container_panel;
+		
+		return $this->Template->parse();
 	}
 
 
@@ -181,9 +196,7 @@ class FrontendUserImport extends Backend
 	 */
 	private function SearchEmail($email)
 	{
-		$objUser = $this->Database->prepare("SELECT * FROM tl_member WHERE email=?")
-			->limit(1)
-			->execute($email);
+		$objUser = $this->Database->prepare("SELECT * FROM tl_member WHERE email=?")->limit(1)->execute($email);
 
 		if ($objUser->numRows < 1)
 			return false;
@@ -288,9 +301,7 @@ class FrontendUserImport extends Backend
 	 */
 	private function SearchEmailInNewsletter($email, $newsletterId)
 	{
-		$objUser = $this->Database->prepare("SELECT * FROM tl_newsletter_recipients WHERE email=? AND pid=?")
-			->limit(1)
-			->execute($email, intval($newsletterId));
+		$objUser = $this->Database->prepare("SELECT * FROM tl_newsletter_recipients WHERE email=? AND pid=?")->limit(1)->execute($email, intval($newsletterId));
 
 		if ($objUser->numRows < 1)
 			return false;
@@ -306,21 +317,19 @@ class FrontendUserImport extends Backend
 	{
 		try
 		{
-			$objGroups = $this->Database->prepare("SELECT groups FROM tl_member WHERE email=? ")
-											  ->execute($email);
+			$objGroups = $this->Database->prepare("SELECT groups FROM tl_member WHERE email=? ")->execute($email);
 
 			$groupArr = unserialize($objGroups->groups);
 
 			if ($groupArr == false)
 			{
-				$this->Database->prepare("UPDATE tl_member SET groups=? WHERE email=?")
-								->execute(serialize($groups), $email);
+				$this->Database->prepare("UPDATE tl_member SET groups=? WHERE email=?")->execute(serialize($groups), $email);
 			}
 			else
 			{
 				$groupArr = array_merge($groupArr, $groups);
-				$this->Database->prepare("UPDATE tl_member SET groups=? WHERE email=?")
-									->execute(serialize($groupArr), $email);
+				
+				$this->Database->prepare("UPDATE tl_member SET groups=? WHERE email=?")->execute(serialize($groupArr), $email);
 			}
 		}
 		catch (Exception $ex)
@@ -384,8 +393,8 @@ class FrontendUserImport extends Backend
 
 		return sha1($strSalt . $password) . ':' . $strSalt;
 	}
-
-
+	
+	
 	/**
 	 * Check for memberlist module
 	 */
@@ -421,6 +430,41 @@ class FrontendUserImport extends Backend
 	{
 		return substr($filename, strrpos($filename, '.'));
 	}
-}
+	
+	
+	/**
+	 * Return the file tree widget as object
+	 */
+	protected function getFileTreeWidget($value=null)
+	{	
+		$widget = new \FileTree();
 
-?>
+		$widget->id = 'source';
+		$widget->name = 'source';
+		$widget->strTable = 'tl_member';
+		$widget->strField = 'source';
+		
+		$widget->value = $value;
+		
+		$widget->label = $GLOBALS['TL_LANG']['tl_member']['source'][0];
+
+		if ($GLOBALS['TL_CONFIG']['showHelp'] && strlen($GLOBALS['TL_LANG']['tl_member']['source'][1]))
+		{
+			$widget->help = $GLOBALS['TL_LANG']['tl_member']['source'][1];
+		}
+
+		// Valiate input
+		if (\Input::post('FORM_SUBMIT') == 'tl_member_frontenduserimport')
+		{
+			print 'dfsdf';
+			$widget->validate();
+
+			if ($widget->hasErrors())
+			{
+				$this->blnSave = false;
+			}
+		}
+
+		return $widget;
+	}
+}

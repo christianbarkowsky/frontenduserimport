@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -6,14 +6,15 @@
  * Copyright (C) 2008-2013 Christian Barkowsky
  * 
  * @package FrontendUserImport
- * @author  Christian Barkowsky <http://www.christianbarkowsky.de>
- * @link    http://www.christianbarkowsky.de
+ * @author  Christian Barkowsky <http://christianbarkowsky.de>
  * @license LGPL
  */
 
 
-array_insert($GLOBALS['TL_DCA']['tl_member']['list']['global_operations'],0, array (
-	'frontenduserimport' => array (
+array_insert($GLOBALS['TL_DCA']['tl_member']['list']['global_operations'],0, array
+(
+	'frontenduserimport' => array
+	(
 		'label'               => &$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'],
 		'href'                => 'key=frontenduserimport',
 		'class'               => 'header_css_frontenduserimport',
@@ -21,9 +22,8 @@ array_insert($GLOBALS['TL_DCA']['tl_member']['list']['global_operations'],0, arr
 	)
 ));
 
-$GLOBALS['TL_DCA']['tl_member']['fields']['source'] = array (
+$GLOBALS['TL_DCA']['tl_member']['fields']['source'] = array
+(
 	'label'                   => &$GLOBALS['TL_LANG']['tl_member']['source'],
-	'eval'                    => array('fieldType'=>'checkbox', 'files'=>true)
+	'eval'                    => array('fieldType'=>'radio', 'files'=>true, 'filesOnly'=>true, 'extensions'=>'csv', 'multiple'=>false)
 );
-
-?>

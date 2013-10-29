@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * FrontendUserImport
@@ -6,8 +6,7 @@
  * Copyright (C) 2008-2013 Christian Barkowsky
  * 
  * @package FrontendUserImport
- * @author  Christian Barkowsky <http://www.christianbarkowsky.de>
- * @link    http://www.christianbarkowsky.de
+ * @author  Christian Barkowsky <http://christianbarkowsky.de>
  * @license LGPL
  */
 
@@ -18,6 +17,4 @@ $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['documentation'] =  array('I
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['confirm'] = '%s leden zijn geimporteerd.';
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['frontenduserimport'] = 'Importeer lid';
 $GLOBALS['TL_LANG']['tl_member_frontenduserimport']['importerror'] = array('Leden konden niet worden geimporteerd. Fout: e-mail en achternaam mag niet leeg zijn.', '');
-$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = 'Geen leden toegevoegd.'
-
-?>
+$GLOBALS['TL_LANG']['tl_member_frontenduserimport']['info'] = 'Geen leden toegevoegd.';
